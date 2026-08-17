@@ -5,7 +5,6 @@ using OgretmenGorevSistemi.Core;
 
 namespace OgretmenGorevSistemi.Tasks
 {
-
     public class TaskManager : MonoBehaviour
     {
         [SerializeField] private Transform character;
@@ -18,6 +17,11 @@ namespace OgretmenGorevSistemi.Tasks
         private int _currentIndex = -1;
         private bool _suppressValidation;
         private bool _autoPlay;
+        private float _holdTimer;
+
+        [Header("Test/Debug")]
+        [Tooltip("'Adýmý Test Et' komutunun hangi adýmdan baþlayacaðý")]
+        [SerializeField] private int debugStartIndex = 0;
 
         public TaskStep CurrentStep =>
             (_currentIndex >= 0 && _currentIndex < steps.Count) ? steps[_currentIndex] : null;
@@ -31,12 +35,29 @@ namespace OgretmenGorevSistemi.Tasks
         {
             if (_suppressValidation || CurrentStep == null || _autoPlay) return;
 
-            if (CurrentStep.definition.Validate(character, CurrentStep.target))
+            if (!CurrentStep.definition.Validate(character, CurrentStep.target))
             {
-                CompleteCurrentStep();
+                _holdTimer = 0f;
+                return;
             }
-        }
 
+            float requiredHold = CurrentStep.definition.RequiredHoldDuration;
+            if (requiredHold > 0f)
+            {
+                _holdTimer += Time.deltaTime;
+                if (_holdTimer < requiredHold) return;
+            }
+
+            _holdTimer = 0f;
+            StartCoroutine(CompleteAfterRoutine());
+        }
+        private IEnumerator CompleteAfterRoutine()
+        {
+            _suppressValidation = true;
+            yield return CurrentStep.definition.PlayCompletionRoutine(character, CurrentStep.target);
+            _suppressValidation = false;
+            CompleteCurrentStep();
+        }
         private void TeleportCharacter(Vector3 position)
         {
             CharacterController cc = character.GetComponent<CharacterController>();
@@ -70,8 +91,20 @@ namespace OgretmenGorevSistemi.Tasks
             RunCurrentStep();
         }
 
+        [ContextMenu("Adýmý Test Et (Debug Start Index)")]
+        public void BeginPlayerAttemptFromDebugIndex()
+        {
+            TeleportCharacter(startPoint.position);
+            _autoPlay = false;
+            _currentIndex = Mathf.Clamp(debugStartIndex, 0, steps.Count - 1);
+            GameEvents.RaisePlayerConfirmedReady();
+            RunCurrentStep();
+        }
+
         private void RunCurrentStep()
         {
+            _holdTimer = 0f;
+
             if (CurrentStep == null)
             {
                 GameEvents.RaiseCurrentStepChanged(null);
@@ -96,6 +129,10 @@ namespace OgretmenGorevSistemi.Tasks
         private IEnumerator RunDemoStep()
         {
             yield return CurrentStep.definition.ExecuteRoutine(character, CurrentStep.target);
+
+            float hold = CurrentStep.definition.RequiredHoldDuration;
+            if (hold > 0f) yield return new WaitForSeconds(hold);
+
             CompleteCurrentStep();
         }
 

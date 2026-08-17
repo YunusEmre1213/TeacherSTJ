@@ -4,17 +4,28 @@ using OgretmenGorevSistemi.Character;
 
 namespace OgretmenGorevSistemi.Tasks
 {
-  
     public abstract class TaskDefinition : ScriptableObject, ITask
     {
         [SerializeField] private string taskName;
         public string TaskName => taskName;
 
+        [Tooltip("Otomatik hatýrlatma 3. kez tetiklendiðinde, demoyla birlikte çalýnacak öðretmen sesi ")]
+        [SerializeField] private AudioClip instructionVoiceClip;
+        public AudioClip InstructionVoiceClip => instructionVoiceClip;
+
+        [Tooltip("Validate() oyuncu denemesinde kaç saniye kesintisiz true dönmeli (0 = anlýk tamamlanýr).")]
+        [SerializeField] private float requiredHoldDuration = 0f;
+        public float RequiredHoldDuration => requiredHoldDuration;
+
         public abstract IEnumerator ExecuteRoutine(Transform character, Transform target);
         public abstract bool Validate(Transform character, Transform target);
         public abstract IEnumerator PlayHintRoutine(Transform character, Transform target);
 
-      
+        public virtual IEnumerator PlayCompletionRoutine(Transform character, Transform target)
+        {
+            yield break;
+        }
+
         protected IEnumerator MoveTowards(Transform character, Transform target, float speed, float stopDistance)
         {
             Animator animator = character.GetComponentInChildren<Animator>();
@@ -37,7 +48,6 @@ namespace OgretmenGorevSistemi.Tasks
             if (animator != null) animator.SetBool("IsMoving", false);
         }
 
-       
         protected Transform GetLookOrigin(Transform character)
         {
             var fps = character.GetComponent<FPSPlayerController>();

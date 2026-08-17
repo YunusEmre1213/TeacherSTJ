@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebddc7bfc18a43e42a6bf363b95c2d9a, type: 3}
+  m_Name: AnneyeBak2
+  m_EditorClassIdentifier: 
+  taskName: Annene Bak
+  instructionVoiceClip: {fileID: 0}
+  requiredHoldDuration: 1.25
+  maxLookDistance: 10
+  rayRadius: 0.25
+  demoRotateSpeed: 50
+  hintRotateSpeed: 50
