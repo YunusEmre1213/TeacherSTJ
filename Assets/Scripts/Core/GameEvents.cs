@@ -2,10 +2,9 @@ using System;
 
 namespace OgretmenGorevSistemi.Core
 {
-
     public static class GameEvents
     {
-        // ---- Diyalog ----
+        // ---- Diyalog  ----
         public static event Action OnTeacherGreetingFinished;
         public static event Action OnPlayerConfirmedReady;
         public static event Action OnDialogueShown;
@@ -16,6 +15,8 @@ namespace OgretmenGorevSistemi.Core
         public static event Action<string> OnCurrentStepChanged;
         public static event Action<int> OnTotalStepsKnown;
         public static event Action<int> OnStarsEarned;
+        public static event Action OnDemoBlocked;
+        public static event Action OnDemoUnblocked;
 
         // ---- Görev Akýþý ----
         public static event Action OnDemoSequenceStarted;
@@ -35,6 +36,8 @@ namespace OgretmenGorevSistemi.Core
         public static void RaiseCurrentStepChanged(string taskName) => OnCurrentStepChanged?.Invoke(taskName);
         public static void RaiseTotalStepsKnown(int totalSteps) => OnTotalStepsKnown?.Invoke(totalSteps);
         public static void RaiseStarsEarned(int stars) => OnStarsEarned?.Invoke(stars);
+        public static void RaiseDemoBlocked() => OnDemoBlocked?.Invoke();
+        public static void RaiseDemoUnblocked() => OnDemoUnblocked?.Invoke();
         public static void RaiseDemoSequenceStarted() => OnDemoSequenceStarted?.Invoke();
         public static void RaiseDemoSequenceFinished() => OnDemoSequenceFinished?.Invoke();
         public static void RaiseTaskStepCompleted(int stepIndex) => OnTaskStepCompleted?.Invoke(stepIndex);

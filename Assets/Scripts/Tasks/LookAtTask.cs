@@ -10,18 +10,25 @@ namespace OgretmenGorevSistemi.Tasks
         [Tooltip("Iþýnýn hedefe ulaþabileceði maksimum mesafe.")]
         [SerializeField] private float maxLookDistance = 10f;
 
-        [Tooltip("Iþýnýn kalýnlýðý")]
+        [Tooltip("Iþýnýn kalýnlýðý (SphereCast yarýçapý) — küçük sapmalara tolerans saðlar. Hedef objenin kendi Collider'ýndan baðýmsýz, ray'in kalýnlýðý.")]
         [SerializeField] private float rayRadius = 0.25f;
 
-        [Tooltip("Raycast hedefe deðse bile, doðal görünmesi için açý bu deðerin altýnda olmalý")]
+        [Tooltip("Raycast hedefe deðse bile, doðal görünmesi için açý bu deðerin altýnda olmalý (kalýn SphereCast'in çok erken/gevþek isabet saymasýný önler).")]
         [SerializeField] private float maxCenteringAngle = 15f;
 
         [SerializeField] private float demoRotateSpeed = 90f;
         [SerializeField] private float hintRotateSpeed = 180f;
 
+        [Tooltip("Yeni bir hedefe geçmeden önce, görsel bakýþýn serbest býrakýlýp bir an nötr pozda bekleyeceði süre — 'gözlerin ani sýçramasý' hissini önler.")]
+        [SerializeField] private float lookResetPause = 0.4f;
+
         public override IEnumerator ExecuteRoutine(Transform character, Transform target)
         {
-            Debug.Log($"[{TaskName}]  {character.name}, {target.name} yönüne dönüyor.");
+            Debug.Log($"[{TaskName}] Demo: {character.name}, {target.name} yönüne dönüyor.");
+
+            ClearVisualHeadTarget(character);
+            yield return new WaitForSeconds(lookResetPause);
+
             UpdateVisualHeadTarget(character, target);
             yield return RotateTowards(character, target, demoRotateSpeed);
         }
@@ -39,13 +46,17 @@ namespace OgretmenGorevSistemi.Tasks
             yield return RotateTowards(character, target, hintRotateSpeed);
             yield return new WaitForSeconds(0.3f);
         }
-
         private void UpdateVisualHeadTarget(Transform character, Transform target)
         {
             var headLookAt = character.GetComponentInChildren<OgretmenGorevSistemi.Character.HeadLookAt>();
             if (headLookAt != null) headLookAt.SetTarget(target);
         }
 
+        private void ClearVisualHeadTarget(Transform character)
+        {
+            var headLookAt = character.GetComponentInChildren<OgretmenGorevSistemi.Character.HeadLookAt>();
+            if (headLookAt != null) headLookAt.SetTarget(null);
+        }
         private bool IsLookingAt(Transform lookOrigin, Transform target)
         {
             Ray ray = new Ray(lookOrigin.position, lookOrigin.forward);

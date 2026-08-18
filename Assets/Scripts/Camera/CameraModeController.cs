@@ -8,11 +8,14 @@ namespace OgretmenGorevSistemi.CameraSystem
     public class CameraModeController : MonoBehaviour
     {
         [SerializeField] private CinemachineCamera fpsCamera;
-        [SerializeField] private CinemachineCamera demoCamera;
 
-        [SerializeField] private int activePriority = 20;
-        [SerializeField] private int inactivePriority = 10;
+        [Tooltip("Oyuncu kontrolündeyken FPS kamerasýnýn önceliði — DemoCameraDirector'ýn en yüksek (aktif) önceliðinden kesinlikle daha büyük olmalý.")]
+        [SerializeField] private int playerModePriority = 30;
 
+        [Tooltip("Demo/hint sýrasýnda FPS kamerasýnýn önceliði — DemoCameraDirector'ýn en düþük (pasif) önceliðinden kesinlikle daha küçük olmalý, ki hiçbir demo kamerasýyla yarýþmasýn.")]
+        [SerializeField] private int demoModePriority = 5;
+
+        [Tooltip("Gerçek kamera geçiþinin ertelenme süresi — DemoFrame'in karartma fade süresine yakýn tutulmalý.")]
         [SerializeField] private float switchDelay = 0.2f;
 
         private void Awake()
@@ -48,15 +51,13 @@ namespace OgretmenGorevSistemi.CameraSystem
         [ContextMenu("Demo Görünümüne Geç")]
         public void SwitchToDemoView()
         {
-            demoCamera.Priority = activePriority;
-            fpsCamera.Priority = inactivePriority;
+            fpsCamera.Priority = demoModePriority;
         }
 
         [ContextMenu("Oyuncu Görünümüne Geç")]
         public void SwitchToPlayerView()
         {
-            fpsCamera.Priority = activePriority;
-            demoCamera.Priority = inactivePriority;
+            fpsCamera.Priority = playerModePriority;
         }
     }
 }

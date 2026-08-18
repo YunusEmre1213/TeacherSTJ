@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace OgretmenGorevSistemi.Character
 {
+
     public class BonePoseController : MonoBehaviour
     {
         [System.Serializable]
@@ -12,7 +13,7 @@ namespace OgretmenGorevSistemi.Character
             public Vector3 targetLocalEulerAngles;
         }
 
-        [Tooltip("Bu poza, PlayGestureTask'ýn Pose Name alanýndan hangi isimle eriþileceði.")]
+        [Tooltip("Bu poza PlayGestureTaskýn Pose Name alanýndan hangi isimle eriþileceði.")]
         [SerializeField] private string poseName = "DurIsareti";
 
         [SerializeField] private BoneTarget[] bones;

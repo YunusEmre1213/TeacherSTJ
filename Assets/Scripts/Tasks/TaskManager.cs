@@ -11,20 +11,36 @@ namespace OgretmenGorevSistemi.Tasks
         [SerializeField] private Transform startPoint;
         [SerializeField] private List<TaskStep> steps = new List<TaskStep>();
 
-        [Tooltip("Kamera Demo görünümüne geçtikten sonra hareketin baþlamasý için beklenecek süre ")]
+        [Tooltip("Kamera Demo görünümüne geçtikten sonra hareketin baþlamasý için beklenecek süre")]
         [SerializeField] private float cameraSwitchDelay = 1f;
 
         private int _currentIndex = -1;
         private bool _suppressValidation;
         private bool _autoPlay;
         private float _holdTimer;
+        private int _demoBlockCount;
 
         [Header("Test/Debug")]
-        [Tooltip("'Adýmý Test Et' komutunun hangi adýmdan baþlayacaðý")]
+        [Tooltip("'Adýmý Test Et' komutunun hangi adýmdan baþlayacaðý ")]
         [SerializeField] private int debugStartIndex = 0;
 
         public TaskStep CurrentStep =>
             (_currentIndex >= 0 && _currentIndex < steps.Count) ? steps[_currentIndex] : null;
+
+        private void OnEnable()
+        {
+            GameEvents.OnDemoBlocked += HandleDemoBlocked;
+            GameEvents.OnDemoUnblocked += HandleDemoUnblocked;
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.OnDemoBlocked -= HandleDemoBlocked;
+            GameEvents.OnDemoUnblocked -= HandleDemoUnblocked;
+        }
+
+        private void HandleDemoBlocked() => _demoBlockCount++;
+        private void HandleDemoUnblocked() => _demoBlockCount = Mathf.Max(0, _demoBlockCount - 1);
 
         private void Start()
         {
@@ -97,6 +113,7 @@ namespace OgretmenGorevSistemi.Tasks
             TeleportCharacter(startPoint.position);
             _autoPlay = false;
             _currentIndex = Mathf.Clamp(debugStartIndex, 0, steps.Count - 1);
+            Debug.Log($"[TaskManager] Debug baþlatma — steps.Count: {steps.Count}, debugStartIndex: {debugStartIndex}, hesaplanan _currentIndex: {_currentIndex}, o index'teki görev: {(steps.Count > 0 ? steps[_currentIndex].definition.TaskName : "YOK")}");
             GameEvents.RaisePlayerConfirmedReady();
             RunCurrentStep();
         }
@@ -128,6 +145,9 @@ namespace OgretmenGorevSistemi.Tasks
 
         private IEnumerator RunDemoStep()
         {
+            if (_demoBlockCount > 0)
+                yield return new WaitUntil(() => _demoBlockCount <= 0);
+
             yield return CurrentStep.definition.ExecuteRoutine(character, CurrentStep.target);
 
             float hold = CurrentStep.definition.RequiredHoldDuration;

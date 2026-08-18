@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskName: Ablana Bak
   instructionVoiceClip: {fileID: 0}
-  requiredHoldDuration: 1.25
+  requiredHoldDuration: 3
   maxLookDistance: 10
   rayRadius: 0.25
-  demoRotateSpeed: 50
-  hintRotateSpeed: 50
+  maxCenteringAngle: 15
+  demoRotateSpeed: 30
+  hintRotateSpeed: 30
+  lookResetPause: 0.4

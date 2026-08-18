@@ -9,11 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d732fa33085ae16479a2178f90685ebc, type: 3}
-  m_Name: GuzelIsareti
+  m_Script: {fileID: 11500000, guid: ebddc7bfc18a43e42a6bf363b95c2d9a, type: 3}
+  m_Name: AnneyeBak2
   m_EditorClassIdentifier: 
-  taskName: "Be\u011Fendim \u0130\u015Fareti Yap"
+  taskName: Annene Bak
   instructionVoiceClip: {fileID: 0}
-  requiredHoldDuration: 0
-  poseName: DurIsareti
-  gestureDuration: 1.5
+  requiredHoldDuration: 3
+  maxLookDistance: 10
+  rayRadius: 0.25
+  maxCenteringAngle: 15
+  demoRotateSpeed: 30
+  hintRotateSpeed: 30
+  lookResetPause: 0.4

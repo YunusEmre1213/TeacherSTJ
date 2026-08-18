@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace OgretmenGorevSistemi.Dialogue
 {
+
     [RequireComponent(typeof(AudioSource))]
     public class TeacherVoice : MonoBehaviour
     {
@@ -14,6 +15,7 @@ namespace OgretmenGorevSistemi.Dialogue
             _audioSource = GetComponent<AudioSource>();
         }
 
+       
         public void Play(AudioClip clip, Action onFinished = null)
         {
             if (clip == null)
@@ -30,6 +32,14 @@ namespace OgretmenGorevSistemi.Dialogue
             _audioSource.Play();
             yield return new WaitForSeconds(clip.length);
             onFinished?.Invoke();
+        }
+
+        public IEnumerator PlayAndWaitRoutine(AudioClip clip)
+        {
+            if (clip == null) yield break;
+            _audioSource.clip = clip;
+            _audioSource.Play();
+            yield return new WaitForSeconds(clip.length);
         }
     }
 }
