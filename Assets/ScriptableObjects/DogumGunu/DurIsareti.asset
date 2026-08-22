@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DurIsareti
   m_EditorClassIdentifier: 
   taskName: "Dur \u0130\u015Fareti Yap"
-  instructionVoiceClip: {fileID: 0}
+  instructionVoiceClip: {fileID: 8300000, guid: 18a4798ccc8fc82438a1e9385c2baca5, type: 3}
   requiredHoldDuration: 0
   poseName: DurIsareti
   gestureDuration: 1.5

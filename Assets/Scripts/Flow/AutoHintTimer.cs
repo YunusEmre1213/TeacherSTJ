@@ -10,7 +10,7 @@ namespace OgretmenGorevSistemi.Flow
         [SerializeField] private TaskManager taskManager;
         [SerializeField] private TeacherVoice teacherVoice;
 
-        [Tooltip("Oyuncuya, bir sonraki otomatik hatýrlatmadan önce tanýnan süre")]
+        [Tooltip("Oyuncuya, bir sonraki otomatik hatýrlatmadan önce tanýnan süre (saniye).")]
         [SerializeField] private float timeoutSeconds = 11f;
 
         private float _secondsElapsed;
@@ -25,6 +25,8 @@ namespace OgretmenGorevSistemi.Flow
             GameEvents.OnCurrentStepChanged += HandleCurrentStepChanged;
             GameEvents.OnHintStarted += HandleHintStarted;
             GameEvents.OnHintFinished += HandleHintFinished;
+            GameEvents.OnDemoBlocked += HandleDemoBlocked;
+            GameEvents.OnDemoUnblocked += HandleDemoUnblocked;
         }
 
         private void OnDisable()
@@ -34,11 +36,15 @@ namespace OgretmenGorevSistemi.Flow
             GameEvents.OnCurrentStepChanged -= HandleCurrentStepChanged;
             GameEvents.OnHintStarted -= HandleHintStarted;
             GameEvents.OnHintFinished -= HandleHintFinished;
+            GameEvents.OnDemoBlocked -= HandleDemoBlocked;
+            GameEvents.OnDemoUnblocked -= HandleDemoUnblocked;
         }
+
+        private int _demoBlockCount;
 
         private void Update()
         {
-            if (!_isCounting) return;
+            if (!_isCounting || _demoBlockCount > 0) return;
 
             _secondsElapsed += Time.deltaTime;
             if (_secondsElapsed >= timeoutSeconds)
@@ -46,6 +52,9 @@ namespace OgretmenGorevSistemi.Flow
                 TriggerAutoHint();
             }
         }
+
+        private void HandleDemoBlocked() => _demoBlockCount++;
+        private void HandleDemoUnblocked() => _demoBlockCount = Mathf.Max(0, _demoBlockCount - 1);
 
         private void HandlePlayerAttemptStarted() => _isPlayerAttempt = true;
         private void HandleDemoStarted() => _isPlayerAttempt = false;
@@ -77,7 +86,13 @@ namespace OgretmenGorevSistemi.Flow
             _isCounting = false;
             _autoHintCount++;
 
-            if (_autoHintCount >= 3)
+            if (_autoHintCount > 3)
+            {
+                taskManager.SkipCurrentStep();
+                return;
+            }
+
+            if (_autoHintCount == 3)
             {
                 AudioClip clip = taskManager.CurrentStep?.definition?.InstructionVoiceClip;
                 if (clip != null) teacherVoice.Play(clip, null);

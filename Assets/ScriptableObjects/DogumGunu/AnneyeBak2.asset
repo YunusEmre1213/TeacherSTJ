@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: AnneyeBak2
   m_EditorClassIdentifier: 
   taskName: Annene Bak
-  instructionVoiceClip: {fileID: 0}
+  instructionVoiceClip: {fileID: 8300000, guid: 5344c9032d8541d44ab604a36b962586, type: 3}
   requiredHoldDuration: 3
-  maxLookDistance: 10
+  maxLookDistance: 20
   rayRadius: 0.25
   maxCenteringAngle: 15
-  demoRotateSpeed: 30
-  hintRotateSpeed: 30
+  demoRotateSpeed: 20
+  hintRotateSpeed: 20
   lookResetPause: 0.4

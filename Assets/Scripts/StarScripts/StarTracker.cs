@@ -4,13 +4,6 @@ using OgretmenGorevSistemi.Core;
 
 namespace OgretmenGorevSistemi.Tasks
 {
-    /// <summary>
-    /// Her adýmda oyuncunun kendi denemesi sýrasýnda kaç kere hatýrlatma
-    /// istediðini sayar adým tamamlanýnca buna göre kazanýlan yýldýzý
-    /// hesaplayýp duyurur Hiç yardým almadan = 3, 1 hatýrlatma = 2,
-    /// 2 hatýrlatma = 1, 3+ hatýrlatma = 0. Demo sýrasýndaki tamamlanmalarý
-    /// hiç saymaz  sadece oyuncunun gerçek denemesi puanlanýr.
-    /// </summary>
     public class StarTracker : MonoBehaviour
     {
         private readonly Dictionary<int, int> _hintCounts = new Dictionary<int, int>();

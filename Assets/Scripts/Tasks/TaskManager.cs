@@ -21,11 +21,12 @@ namespace OgretmenGorevSistemi.Tasks
         private int _demoBlockCount;
 
         [Header("Test/Debug")]
-        [Tooltip("'Adýmý Test Et' komutunun hangi adýmdan baþlayacaðý ")]
         [SerializeField] private int debugStartIndex = 0;
 
         public TaskStep CurrentStep =>
             (_currentIndex >= 0 && _currentIndex < steps.Count) ? steps[_currentIndex] : null;
+
+        public int CurrentStepIndex => _currentIndex;
 
         private void OnEnable()
         {
@@ -49,7 +50,7 @@ namespace OgretmenGorevSistemi.Tasks
 
         private void Update()
         {
-            if (_suppressValidation || CurrentStep == null || _autoPlay) return;
+            if (_suppressValidation || CurrentStep == null || _autoPlay || _demoBlockCount > 0) return;
 
             if (!CurrentStep.definition.Validate(character, CurrentStep.target))
             {
@@ -74,18 +75,34 @@ namespace OgretmenGorevSistemi.Tasks
             _suppressValidation = false;
             CompleteCurrentStep();
         }
-        private void TeleportCharacter(Vector3 position)
+        private void TeleportCharacter(Vector3 position, Quaternion? rotation = null)
         {
             CharacterController cc = character.GetComponent<CharacterController>();
             if (cc != null) cc.enabled = false;
             character.position = position;
+            if (rotation.HasValue) character.rotation = rotation.Value;
             if (cc != null) cc.enabled = true;
+
+            var fps = character.GetComponent<Character.FPSPlayerController>();
+            if (fps != null && rotation.HasValue)
+            {
+                fps.SetHomeOrientation(rotation.Value);
+                fps.ResetToHomeOrientation();
+            }
+        }
+
+        [Header("Öðretmen odasý")]
+        [SerializeField] private Transform teacherRoomPoint;
+
+        public void TeleportToTeacherRoom()
+        {
+            if (teacherRoomPoint != null) TeleportCharacter(teacherRoomPoint.position, teacherRoomPoint.rotation);
         }
 
         [ContextMenu("Demo Sýrasýný Baþlat")]
         public void BeginDemoSequence()
         {
-            TeleportCharacter(startPoint.position);
+            TeleportCharacter(startPoint.position, startPoint.rotation);
             GameEvents.RaiseDemoSequenceStarted();
             _autoPlay = true;
             _currentIndex = 0;
@@ -101,7 +118,7 @@ namespace OgretmenGorevSistemi.Tasks
         [ContextMenu("Oyuncu Denemesini Baþlat")]
         public void BeginPlayerAttempt()
         {
-            TeleportCharacter(startPoint.position);
+            TeleportCharacter(startPoint.position, startPoint.rotation);
             _autoPlay = false;
             _currentIndex = 0;
             RunCurrentStep();
@@ -110,7 +127,7 @@ namespace OgretmenGorevSistemi.Tasks
         [ContextMenu("Adýmý Test Et (Debug Start Index)")]
         public void BeginPlayerAttemptFromDebugIndex()
         {
-            TeleportCharacter(startPoint.position);
+            TeleportCharacter(startPoint.position, startPoint.rotation);
             _autoPlay = false;
             _currentIndex = Mathf.Clamp(debugStartIndex, 0, steps.Count - 1);
             Debug.Log($"[TaskManager] Debug baþlatma — steps.Count: {steps.Count}, debugStartIndex: {debugStartIndex}, hesaplanan _currentIndex: {_currentIndex}, o index'teki görev: {(steps.Count > 0 ? steps[_currentIndex].definition.TaskName : "YOK")}");
@@ -128,7 +145,7 @@ namespace OgretmenGorevSistemi.Tasks
 
                 if (_autoPlay)
                 {
-                    TeleportCharacter(startPoint.position);
+                    TeleportToTeacherRoom();
                     GameEvents.RaiseDemoSequenceFinished();
                 }
                 else GameEvents.RaiseAllStepsCompleted();
@@ -162,6 +179,11 @@ namespace OgretmenGorevSistemi.Tasks
             _currentIndex++;
             RunCurrentStep();
         }
+        public void SkipCurrentStep()
+        {
+            if (CurrentStep == null) return;
+            CompleteCurrentStep();
+        }
 
         [ContextMenu("Hint Oynat (Mevcut Adým)")]
         public void ReplayHintForCurrentStep()
@@ -182,6 +204,9 @@ namespace OgretmenGorevSistemi.Tasks
             Vector3 originalPosition = character.position;
             yield return CurrentStep.definition.PlayHintRoutine(character, CurrentStep.target);
             TeleportCharacter(originalPosition);
+
+            var fps = character.GetComponent<Character.FPSPlayerController>();
+            if (fps != null) fps.ResetToHomeOrientation();
 
             GameEvents.RaiseHintFinished();
             _suppressValidation = false;

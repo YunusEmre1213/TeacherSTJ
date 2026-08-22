@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace OgretmenGorevSistemi.Tasks
 {
-
     [CreateAssetMenu(menuName = "Görevler/Bir Yere Bak", fileName = "YeniBakGorevi")]
     public class LookAtTask : TaskDefinition
     {
@@ -17,7 +16,8 @@ namespace OgretmenGorevSistemi.Tasks
         [SerializeField] private float maxCenteringAngle = 15f;
 
         [SerializeField] private float demoRotateSpeed = 90f;
-        [SerializeField] private float hintRotateSpeed = 180f;
+        [Tooltip("Hint artýk her zaman sabit bir referans noktadan baþladýðý için (oyuncunun her nereye baktýðýndan deðil), demo ile ayný yavaþ tempoda olmalý — yoksa kýsa mesafe + yüksek hýz 'ani sýçrama' gibi görünür.")]
+        [SerializeField] private float hintRotateSpeed = 90f;
 
         [Tooltip("Yeni bir hedefe geçmeden önce, görsel bakýþýn serbest býrakýlýp bir an nötr pozda bekleyeceði süre — 'gözlerin ani sýçramasý' hissini önler.")]
         [SerializeField] private float lookResetPause = 0.4f;
@@ -30,7 +30,7 @@ namespace OgretmenGorevSistemi.Tasks
             yield return new WaitForSeconds(lookResetPause);
 
             UpdateVisualHeadTarget(character, target);
-            yield return RotateTowards(character, target, demoRotateSpeed);
+            yield return RotateTowards(character, target, demoRotateSpeed, resetOrientationFirst: false);
         }
 
         public override bool Validate(Transform character, Transform target)
@@ -43,9 +43,10 @@ namespace OgretmenGorevSistemi.Tasks
         {
             Debug.Log($"[{TaskName}] Hatýrlatma: {target.name} yönüne bakman gerekiyordu.");
             UpdateVisualHeadTarget(character, target);
-            yield return RotateTowards(character, target, hintRotateSpeed);
+            yield return RotateTowards(character, target, hintRotateSpeed, resetOrientationFirst: true);
             yield return new WaitForSeconds(0.3f);
         }
+
         private void UpdateVisualHeadTarget(Transform character, Transform target)
         {
             var headLookAt = character.GetComponentInChildren<OgretmenGorevSistemi.Character.HeadLookAt>();
@@ -57,27 +58,46 @@ namespace OgretmenGorevSistemi.Tasks
             var headLookAt = character.GetComponentInChildren<OgretmenGorevSistemi.Character.HeadLookAt>();
             if (headLookAt != null) headLookAt.SetTarget(null);
         }
+
+        private float _lastLogTime;
+
         private bool IsLookingAt(Transform lookOrigin, Transform target)
         {
             Ray ray = new Ray(lookOrigin.position, lookOrigin.forward);
-            if (!Physics.SphereCast(ray, rayRadius, out RaycastHit hit, maxLookDistance))
-                return false;
+            bool hitSomething = Physics.SphereCast(ray, rayRadius, out RaycastHit hit, maxLookDistance);
 
-            if (hit.transform != target && !hit.transform.IsChildOf(target))
-                return false;
+            bool isTarget = false;
+            float angle = -1f;
+            if (hitSomething && (hit.transform == target || hit.transform.IsChildOf(target)))
+            {
+                Vector3 direction = (target.position - lookOrigin.position).normalized;
+                angle = Vector3.Angle(lookOrigin.forward, direction);
+                isTarget = angle <= maxCenteringAngle;
+            }
 
-            Vector3 direction = (target.position - lookOrigin.position).normalized;
-            float angle = Vector3.Angle(lookOrigin.forward, direction);
-            return angle <= maxCenteringAngle;
+            if (Time.time - _lastLogTime > 0.3f)
+            {
+                _lastLogTime = Time.time;
+                Debug.Log($"[{TaskName}] IsLookingAt — hedef dünya konumu: {target.position}, vurdu mu: {hitSomething}, ne: {(hitSomething ? hit.transform.name : "-")}, açý: {angle:F1}, sonuç: {(hitSomething && hit.transform == target || (hitSomething && hit.transform.IsChildOf(target)) ? isTarget.ToString() : "hedef deðil")}");
+            }
+
+            return isTarget;
         }
-
-        private IEnumerator RotateTowards(Transform character, Transform target, float speed)
+        private IEnumerator RotateTowards(Transform character, Transform target, float speed, bool resetOrientationFirst)
         {
             Transform lookOrigin = GetLookOrigin(character);
 
-            if (lookOrigin != character)
+            if (resetOrientationFirst)
             {
-                lookOrigin.localRotation = Quaternion.identity;
+                var fpsController = character.GetComponent<OgretmenGorevSistemi.Character.FPSPlayerController>();
+                if (fpsController != null)
+                {
+                    fpsController.ResetToHomeOrientation();
+                }
+                else if (lookOrigin != character)
+                {
+                    lookOrigin.localRotation = Quaternion.identity;
+                }
             }
 
             while (!IsLookingAt(lookOrigin, target))

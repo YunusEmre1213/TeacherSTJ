@@ -8,10 +8,9 @@ namespace OgretmenGorevSistemi.Character
     [RequireComponent(typeof(PlayerInputHandler))]
     public class FPSPlayerController : MonoBehaviour
     {
-        
+        [Tooltip("Göz hizasýndaki child transform — Cinemachine FPS kamerasý buna baðlanacak.")]
         [SerializeField] private Transform cameraPivot;
 
-     
         public Transform CameraPivot => cameraPivot;
         [SerializeField] private float moveSpeed = 4f;
         [SerializeField] private float mouseSensitivity = 2f;
@@ -26,6 +25,18 @@ namespace OgretmenGorevSistemi.Character
         private float _verticalVelocity;
         private float _pitch;
         private bool _controlsEnabled = true;
+        private bool _movementLocked;
+        private float _groundedGraceTimer;
+        private Quaternion _homeRotation = Quaternion.identity;
+
+        public void SetHomeOrientation(Quaternion rotation) => _homeRotation = rotation;
+
+        public void ResetToHomeOrientation()
+        {
+            transform.rotation = _homeRotation;
+            _pitch = 0f;
+            cameraPivot.localRotation = Quaternion.identity;
+        }
 
         public event System.Action<Transform> Interacted;
 
@@ -45,6 +56,7 @@ namespace OgretmenGorevSistemi.Character
             GameEvents.OnHintFinished += EnableControl;
             GameEvents.OnDemoSequenceStarted += DisableControl;
             GameEvents.OnDemoSequenceFinished += EnableControl;
+            GameEvents.OnPlayerConfirmedReady += LockMovement;
         }
 
         private void OnDisable()
@@ -57,7 +69,9 @@ namespace OgretmenGorevSistemi.Character
             GameEvents.OnHintFinished -= EnableControl;
             GameEvents.OnDemoSequenceStarted -= DisableControl;
             GameEvents.OnDemoSequenceFinished -= EnableControl;
+            GameEvents.OnPlayerConfirmedReady -= LockMovement;
         }
+        private void LockMovement() => _movementLocked = true;
 
         private void Update()
         {
@@ -72,14 +86,14 @@ namespace OgretmenGorevSistemi.Character
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            _pitch = 0f;
-            cameraPivot.localRotation = Quaternion.identity;
+            ResetToHomeOrientation();
         }
 
         private void EnableControl()
         {
             _controlsEnabled = true;
             _verticalVelocity = 0f;
+            _groundedGraceTimer = 0.2f;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
@@ -94,14 +108,24 @@ namespace OgretmenGorevSistemi.Character
 
         private void HandleMove()
         {
-            Vector3 move = transform.right * _input.MoveInput.x + transform.forward * _input.MoveInput.y;
+            Vector3 move = _movementLocked
+                ? Vector3.zero
+                : transform.right * _input.MoveInput.x + transform.forward * _input.MoveInput.y;
             move *= moveSpeed;
 
-            if (_controller.isGrounded && _verticalVelocity < 0f)
-                _verticalVelocity = -1f;
-            _verticalVelocity += gravity * Time.deltaTime;
-            move.y = _verticalVelocity;
+            if (_groundedGraceTimer > 0f)
+            {
+                _groundedGraceTimer -= Time.deltaTime;
+                _verticalVelocity = 0f;
+            }
+            else
+            {
+                if (_controller.isGrounded && _verticalVelocity < 0f)
+                    _verticalVelocity = -1f;
+                _verticalVelocity += gravity * Time.deltaTime;
+            }
 
+            move.y = _verticalVelocity;
             _controller.Move(move * Time.deltaTime);
 
             if (animator != null)
